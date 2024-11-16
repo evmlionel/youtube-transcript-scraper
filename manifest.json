@@ -6,7 +6,8 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "clipboardWrite"
+    "clipboardWrite",
+    "storage"
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
@@ -23,7 +24,7 @@
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*"],
-      "js": ["transcriptData.js", "content.js"],
+      "js": ["utils.js", "storage.js", "transcriptData.js", "content.js"],
       "run_at": "document_idle"
     }
   ],
