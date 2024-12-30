@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8" />
     <title>YouTube Transcript Scraper</title>
     <style>
-      :root {
+      :root[data-theme='light'] {
         --bg-color: #ffffff;
         --text-color: #333333;
         --secondary-bg: #f8f9fa;
@@ -14,17 +15,27 @@
         --error-color: #ea4335;
       }
 
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg-color: #202124;
-          --text-color: #e8eaed;
-          --secondary-bg: #292a2d;
-          --border-color: #5f6368;
-          --primary-color: #8ab4f8;
-          --primary-hover: #aecbfa;
-          --success-color: #81c995;
-          --error-color: #f28b82;
-        }
+      :root[data-theme='dark'] {
+        --bg-color: #202124;
+        --text-color: #e8eaed;
+        --secondary-bg: #292a2d;
+        --border-color: #5f6368;
+        --primary-color: #8ab4f8;
+        --primary-hover: #aecbfa;
+        --success-color: #81c995;
+        --error-color: #f28b82;
+      }
+
+      /* Default theme (light) */
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #333333;
+        --secondary-bg: #f8f9fa;
+        --border-color: #ddd;
+        --primary-color: #1a73e8;
+        --primary-hover: #1557b0;
+        --success-color: #34a853;
+        --error-color: #ea4335;
       }
 
       body {

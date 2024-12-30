@@ -11,17 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const spinner = document.querySelector('.spinner');
   const themeToggle = document.getElementById('theme-toggle');
 
-  // Check for saved theme preference or use system preference
-  const savedTheme = localStorage.getItem('theme');
-  if (savedTheme) {
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  } else {
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-      .matches
+  // Set initial theme on load
+  const savedTheme =
+    localStorage.getItem('theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches
       ? 'dark'
-      : 'light';
-    document.documentElement.setAttribute('data-theme', systemTheme);
-  }
+      : 'light');
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  themeToggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
 
   function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
@@ -175,49 +172,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Add keyboard shortcuts
   document.addEventListener('keydown', (e) => {
-    if (e.altKey) {
+    // Use Command key (metaKey) for Mac instead of Alt
+    if (e.metaKey && ['g', 'c', 'd'].includes(e.key.toLowerCase())) {
+      e.preventDefault();
+
       switch (e.key.toLowerCase()) {
         case 'g':
           if (!getTranscriptBtn.disabled) {
             getTranscriptBtn.click();
+            getTranscriptBtn.focus();
           }
           break;
         case 'c':
           if (!copyTranscriptBtn.disabled) {
             copyTranscriptBtn.click();
+            copyTranscriptBtn.focus();
           }
           break;
         case 'd':
           if (!downloadTranscriptBtn.disabled) {
             downloadTranscriptBtn.click();
+            downloadTranscriptBtn.focus();
           }
           break;
       }
     }
   });
 
-  // Add tooltip information to buttons
+  // Add tooltip information to buttons with Mac-specific shortcuts
   const buttons = [getTranscriptBtn, copyTranscriptBtn, downloadTranscriptBtn];
   buttons.forEach((button) => {
-    const shortcut = button.getAttribute('aria-label').match(/\(([^)]+)\)/)[1];
+    const shortcut = button
+      .getAttribute('aria-label')
+      .match(/\(([^)]+)\)/)[1]
+      .replace('Alt', '⌘');
     button.title = `${button.textContent.trim()} (${shortcut})`;
+    // Also update the aria-label
+    button.setAttribute(
+      'aria-label',
+      button.getAttribute('aria-label').replace('Alt', '⌘')
+    );
   });
 
-  // Theme toggle handler
+  // Theme toggle handler with immediate visual feedback
   themeToggle.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const currentTheme =
+      document.documentElement.getAttribute('data-theme') || 'light';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
 
-    // Update emoji
-    themeToggle.textContent = newTheme === 'dark' ? '🌓' : '🌔';
+    // Update emoji and apply theme immediately
+    themeToggle.textContent = newTheme === 'dark' ? '🌙' : '☀️';
   });
-
-  // Update theme toggle emoji on load
-  themeToggle.textContent =
-    document.documentElement.getAttribute('data-theme') === 'dark'
-      ? '🌓'
-      : '🌔';
 });
