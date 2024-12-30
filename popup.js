@@ -76,24 +76,47 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStatus('');
     transcriptPreview.textContent = '';
 
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    async function attemptGetTranscript() {
+      try {
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+
+        if (!tab.url.includes('youtube.com/watch')) {
+          throw new Error('Please navigate to a YouTube video page first.');
+        }
+
+        const response = await chrome.tabs.sendMessage(tab.id, {
+          action: 'getTranscript',
+        });
+
+        if (response.transcriptData.error) {
+          throw new Error(response.transcriptData.error);
+        }
+
+        return response;
+      } catch (error) {
+        if (
+          retryCount < maxRetries &&
+          error.message !== 'Please navigate to a YouTube video page first.'
+        ) {
+          retryCount++;
+          updateStatus(`Retrying... (${retryCount}/${maxRetries})`, true);
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1000 * retryCount)
+          );
+          return attemptGetTranscript();
+        }
+        throw error;
+      }
+    }
+
     try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      if (!tab.url.includes('youtube.com/watch')) {
-        throw new Error('Please navigate to a YouTube video page first.');
-      }
-
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: 'getTranscript',
-      });
-
-      if (response.transcriptData.error) {
-        throw new Error(response.transcriptData.error);
-      }
-
+      const response = await attemptGetTranscript();
       currentTranscriptData = new TranscriptData(
         response.transcriptData.segments,
         response.transcriptData.videoId
@@ -111,7 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  copyTranscriptBtn.addEventListener('click', async () => {
+  // Debounce the preview update
+  const debouncedPreviewUpdate = PerformanceUtils.debounce(
+    updateTranscriptPreview,
+    300
+  );
+
+  // Debounce button actions
+  const debouncedCopy = PerformanceUtils.debounce(async () => {
     if (!currentTranscriptData) return;
 
     try {
@@ -121,20 +151,15 @@ document.addEventListener('DOMContentLoaded', () => {
         format,
         withTimestamps
       );
-
       await navigator.clipboard.writeText(formattedTranscript);
       updateStatus('Copied to clipboard!');
-
-      // Clear success message after 2 seconds
-      setTimeout(() => {
-        updateStatus('');
-      }, 2000);
+      setTimeout(() => updateStatus(''), 2000);
     } catch (error) {
       updateStatus('Failed to copy: ' + error.message, true);
     }
-  });
+  }, 300);
 
-  downloadTranscriptBtn.addEventListener('click', () => {
+  const debouncedDownload = PerformanceUtils.debounce(() => {
     if (!currentTranscriptData) return;
 
     try {
@@ -156,19 +181,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       URL.revokeObjectURL(url);
       updateStatus('Download started!');
-
-      // Clear success message after 2 seconds
-      setTimeout(() => {
-        updateStatus('');
-      }, 2000);
+      setTimeout(() => updateStatus(''), 2000);
     } catch (error) {
       updateStatus('Failed to download: ' + error.message, true);
     }
-  });
+  }, 300);
 
-  // Update preview when format or timestamp option changes
-  formatSelect.addEventListener('change', updateTranscriptPreview);
-  includeTimestamps.addEventListener('change', updateTranscriptPreview);
+  // Update event listeners to use debounced functions
+  formatSelect.addEventListener('change', debouncedPreviewUpdate);
+  includeTimestamps.addEventListener('change', debouncedPreviewUpdate);
+  copyTranscriptBtn.addEventListener('click', debouncedCopy);
+  downloadTranscriptBtn.addEventListener('click', debouncedDownload);
 
   // Add keyboard shortcuts
   document.addEventListener('keydown', (e) => {
@@ -226,4 +249,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update emoji and apply theme immediately
     themeToggle.textContent = newTheme === 'dark' ? '🌙' : '☀️';
   });
+
+  // Memory cleanup function
+  function cleanup() {
+    // Clear any pending timeouts
+    const timeouts = window.setTimeout(() => {}, 0);
+    for (let i = 0; i < timeouts; i++) {
+      window.clearTimeout(i);
+    }
+
+    // Clear transcript data and preview
+    if (currentTranscriptData) {
+      currentTranscriptData.clearCache();
+      currentTranscriptData = null;
+    }
+    transcriptPreview.textContent = '';
+
+    // Remove any lingering notifications
+    document.querySelectorAll('.notification').forEach((n) => n.remove());
+  }
+
+  // Clean up when popup is closed
+  window.addEventListener('unload', cleanup);
+
+  // Clean up when switching to a different video
+  getTranscriptBtn.addEventListener('click', cleanup);
 });
