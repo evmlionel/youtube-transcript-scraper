@@ -7,6 +7,13 @@ function debugLog(method, message, data = null) {
   }
 }
 
+function decodeHtmlEntities(text) {
+  // Create a temporary DOM element to decode HTML entities
+  const textArea = document.createElement('textarea');
+  textArea.innerHTML = text;
+  return textArea.value;
+}
+
 async function getTranscriptData() {
   try {
     debugLog('getTranscriptData', 'Starting transcript extraction');
@@ -200,7 +207,7 @@ async function fetchTranscriptFromInnerTube(videoId) {
     const segments = Array.from(textElements).map(text => ({
       start: parseFloat(text.getAttribute('start')),
       duration: parseFloat(text.getAttribute('dur')),
-      text: text.textContent.trim()
+      text: decodeHtmlEntities(text.textContent.trim())
     }));
     
     debugLog('fetchTranscriptFromInnerTube', `Extracted ${segments.length} segments`);
@@ -308,7 +315,7 @@ async function fetchTranscriptFromAPI(videoId) {
     const segments = Array.from(textElements).map(text => ({
       start: parseFloat(text.getAttribute('start')),
       duration: parseFloat(text.getAttribute('dur')),
-      text: text.textContent.trim()
+      text: decodeHtmlEntities(text.textContent.trim())
     }));
 
     debugLog('fetchTranscriptFromAPI', `Extracted ${segments.length} segments`);
@@ -435,7 +442,7 @@ async function fetchTranscriptFromPage(videoId) {
     const segments = Array.from(textElements).map(text => ({
       start: parseFloat(text.getAttribute('start')),
       duration: parseFloat(text.getAttribute('dur')),
-      text: text.textContent.trim()
+      text: decodeHtmlEntities(text.textContent.trim())
     }));
 
     debugLog('fetchTranscriptFromPage', `Extracted ${segments.length} segments`);
@@ -538,7 +545,7 @@ async function fetchTranscriptFromLegacyAPI(videoId) {
     const segments = Array.from(textElements).map(text => ({
       start: parseFloat(text.getAttribute('start')),
       duration: parseFloat(text.getAttribute('dur')),
-      text: text.textContent.trim()
+      text: decodeHtmlEntities(text.textContent.trim())
     }));
 
     debugLog('fetchTranscriptFromLegacyAPI', `Extracted ${segments.length} segments`);
