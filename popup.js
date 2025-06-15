@@ -50,7 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateTranscriptPreview() {
-    if (!currentTranscriptData) return;
+    if (!currentTranscriptData) {
+      transcriptPreview.textContent = '';
+      transcriptPreview.classList.remove('has-content');
+      return;
+    }
 
     const format = formatSelect.value;
     const withTimestamps = includeTimestamps.checked;
@@ -63,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
     transcriptPreview.textContent =
       formattedTranscript.slice(0, 500) +
       (formattedTranscript.length > 500 ? '...' : '');
+    
+    transcriptPreview.classList.add('has-content');
   }
 
   function showSpinner(show) {
