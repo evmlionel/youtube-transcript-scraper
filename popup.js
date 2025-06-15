@@ -95,7 +95,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (response.transcriptData.error) {
-          throw new Error(response.transcriptData.error);
+          // Provide more helpful error messages based on the error type
+          let userFriendlyMessage = response.transcriptData.error;
+          
+          if (userFriendlyMessage.includes('No captions available')) {
+            userFriendlyMessage = 'This video does not have captions/subtitles available. Please try a different video with captions enabled.';
+          } else if (userFriendlyMessage.includes('Node cannot be found')) {
+            userFriendlyMessage = 'Unable to access video page elements. Please refresh the YouTube page and try again.';
+          } else if (userFriendlyMessage.includes('Failed to get transcript data')) {
+            userFriendlyMessage = 'Failed to extract transcript. This may be due to YouTube changes or video restrictions.';
+          }
+          
+          throw new Error(userFriendlyMessage);
         }
 
         return response;
@@ -249,6 +260,54 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update emoji and apply theme immediately
     themeToggle.textContent = newTheme === 'dark' ? '🌙' : '☀️';
   });
+
+  // Debug functions (only in development)
+  if (window.location.protocol === 'chrome-extension:') {
+    // Add debug button (hidden by default)
+    const debugBtn = document.createElement('button');
+    debugBtn.textContent = 'Debug Methods';
+    debugBtn.style.display = 'none';
+    debugBtn.id = 'debug-btn';
+    document.body.appendChild(debugBtn);
+    
+    // Show debug button when Alt+D is pressed
+    document.addEventListener('keydown', (e) => {
+      if (e.altKey && e.key.toLowerCase() === 'd') {
+        debugBtn.style.display = debugBtn.style.display === 'none' ? 'block' : 'none';
+      }
+    });
+    
+    debugBtn.addEventListener('click', async () => {
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const tab = tabs[0];
+        
+        if (!tab.url.includes('youtube.com/watch')) {
+          updateStatus('Please navigate to a YouTube video page first.', true);
+          return;
+        }
+        
+        updateStatus('Running debug tests...', false);
+        
+        const response = await chrome.tabs.sendMessage(tab.id, {
+          action: 'debugTestAll'
+        });
+        
+        if (response.results) {
+          console.log('Debug results:', response.results);
+          let statusMsg = 'Debug completed. Check console for details. Results: ';
+          for (const [method, result] of Object.entries(response.results)) {
+            statusMsg += `${method}:${result.success ? '✓' : '✗'} `;
+          }
+          updateStatus(statusMsg, false);
+        } else {
+          updateStatus('Debug failed: ' + (response.error || 'Unknown error'), true);
+        }
+      } catch (error) {
+        updateStatus('Debug error: ' + error.message, true);
+      }
+    });
+  }
 
   // Memory cleanup function
   function cleanup() {
