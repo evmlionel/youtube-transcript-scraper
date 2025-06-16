@@ -1,5 +1,5 @@
 // Debug flag - set to true for verbose logging
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 function debugLog(method, message, data = null) {
   if (DEBUG_MODE) {
@@ -95,7 +95,7 @@ async function getTranscriptData() {
     return transcriptData;
   } catch (error) {
     console.error('Error getting transcript:', error);
-    return { error: 'Failed to get transcript data: ' + error.message };
+    return { error: 'Unable to extract transcript. Please try again or contact support if the issue persists.' };
   }
 }
 
@@ -623,7 +623,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       })
       .catch(error => {
         console.error('Error:', error);
-        sendResponse({ transcriptData: { error: 'Failed to get transcript: ' + error.message } });
+        sendResponse({ transcriptData: { error: 'Failed to extract transcript. Please try again.' } });
       });
     return true; // Required for async response
   }
@@ -636,7 +636,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ result });
       })
       .catch(error => {
-        sendResponse({ error: error.message });
+        sendResponse({ error: 'Debug operation failed' });
       });
     return true;
   }
@@ -647,7 +647,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ results });
       })
       .catch(error => {
-        sendResponse({ error: error.message });
+        sendResponse({ error: 'Debug operation failed' });
       });
     return true;
   }

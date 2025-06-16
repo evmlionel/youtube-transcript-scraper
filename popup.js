@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStatus('Transcript loaded successfully!');
     } catch (error) {
       console.error('Error:', error);
-      updateStatus(error.message || 'Failed to get transcript', true);
+      updateStatus('Failed to get transcript. Please try again.', true);
       updateButtons(false);
     } finally {
       showSpinner(false);
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStatus('Copied to clipboard!');
       setTimeout(() => updateStatus(''), 2000);
     } catch (error) {
-      updateStatus('Failed to copy: ' + error.message, true);
+      updateStatus('Failed to copy transcript. Please try again.', true);
     }
   }, 300);
 
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateStatus('Download started!');
       setTimeout(() => updateStatus(''), 2000);
     } catch (error) {
-      updateStatus('Failed to download: ' + error.message, true);
+      updateStatus('Failed to download transcript. Please try again.', true);
     }
   }, 300);
 
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
           updateStatus('Debug failed: ' + (response.error || 'Unknown error'), true);
         }
       } catch (error) {
-        updateStatus('Debug error: ' + error.message, true);
+        updateStatus('Debug operation failed', true);
       }
     });
   }
